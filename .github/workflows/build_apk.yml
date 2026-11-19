@@ -50,7 +50,9 @@ jobs:
         run: |
           if [ ! -d "android" ]; then
             flutter create --platforms=android --org br.com.viajou .
+            rm -f test/widget_test.dart
           fi
+          
 
       - name: Configure Android Permissions & Queries
         run: |
