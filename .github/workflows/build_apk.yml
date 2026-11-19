@@ -46,12 +46,17 @@ jobs:
           channel: 'stable'
           cache: true
 
+
       - name: Create Android platform files if missing
         run: |
           if [ ! -d "android" ]; then
             flutter create --platforms=android --org br.com.viajou .
             rm -f test/widget_test.dart
           fi
+          find android -type f \( -name "*.gradle" -o -name "*.gradle.kts" \) -exec sed -i 's/org.jetbrains.kotlin:kotlin-gradle-plugin:[0-9.]*/org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22/g' {} +
+          find android -type f \( -name "*.gradle" -o -name "*.gradle.kts" \) -exec sed -i 's/id("org.jetbrains.kotlin.android") version "[0-9.]*"/id("org.jetbrains.kotlin.android") version "1.9.22"/g' {} +
+          find android -type f \( -name "*.gradle" -o -name "*.gradle.kts" \) -exec sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.22"/g' {} +
+
           
 
       - name: Configure Android Permissions & Queries
