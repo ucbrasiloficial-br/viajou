@@ -1,0 +1,64 @@
+name: Build VIAJOU Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Unpack VIAJOU ZIP archive
+        run: |
+          if [ -f "viajou_flutter_completo.zip" ]; then
+            unzip -o viajou_flutter_completo.zip -d .
+          fi
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Create Android platform files if missing
+        run: |
+          if [ ! -d "android" ]; then
+            flutter create --platforms=android --org br.com.viajou .
+          fi
+
+      - name: Configure Android Permissions & Queries
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if ! grep -q "android.permission.INTERNET" "$MANIFEST"; then
+            sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/>\n    <application/' "$MANIFEST"
+          fi
+          if ! grep -q "<queries>" "$MANIFEST"; then
+            sed -i 's/<\/manifest>/    <queries>\n        <intent>\n            <action android:name="android.intent.action.VIEW" \/>\n            <data android:scheme="https" \/>\n        <\/intent>\n    <\/queries>\n<\/manifest>/' "$MANIFEST"
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze code
+        run: flutter analyze --no-fatal-infos
+
+      - name: Build Release APK
+        run: flutter build apk --release --split-per-abi
+
+      - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: viajou-android-apks
+          path: build/app/outputs/flutter-apk/*.apk
