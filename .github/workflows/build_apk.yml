@@ -13,11 +13,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Unpack VIAJOU ZIP archive
+      - name: Unpack ZIP and normalize project root
         run: |
-          if [ -f "viajou_flutter_completo.zip" ]; then
-            unzip -o viajou_flutter_completo.zip -d .
+          ZIP_FILE=$(ls *.zip 2>/dev/null | head -n 1)
+          if [ -n "$ZIP_FILE" ]; then
+            unzip -o "$ZIP_FILE" -d /tmp/unpacked_viajou
+            # Se extraiu dentro de uma subpasta, sobe tudo para a raiz do repo
+            SUBDIR=$(find /tmp/unpacked_viajou -maxdepth 2 -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+            if [ -n "$SUBDIR" ]; then
+              cp -rf "$SUBDIR"/* .
+            fi
           fi
+          rm -rf viajou_flutter_completo
+
+      - name: Patch Flutter 3.24 compatibility
+        run: |
+          find lib -name "*.dart" -exec sed -i 's/\.withValues(alpha: \([0-9.]*\))/\.withOpacity(\1)/g' {} +
+          sed -i 's/CardThemeData(/CardTheme(/g' lib/theme/app_theme.dart
+          sed -i 's/initialValue:/value:/g' lib/screens/search_screen.dart lib/screens/results_screen.dart
+          sed -i 's/activeThumbColor:/activeColor:/g' lib/screens/settings_screen.dart
 
       - name: Setup Java
         uses: actions/setup-java@v4
