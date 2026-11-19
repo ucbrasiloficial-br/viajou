@@ -53,9 +53,8 @@ jobs:
             flutter create --platforms=android --org br.com.viajou .
             rm -f test/widget_test.dart
           fi
-          find android -type f \( -name "*.gradle" -o -name "*.gradle.kts" \) -exec sed -i 's/org.jetbrains.kotlin:kotlin-gradle-plugin:[0-9.]*/org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22/g' {} +
-          find android -type f \( -name "*.gradle" -o -name "*.gradle.kts" \) -exec sed -i 's/id("org.jetbrains.kotlin.android") version "[0-9.]*"/id("org.jetbrains.kotlin.android") version "1.9.22"/g' {} +
-          find android -type f \( -name "*.gradle" -o -name "*.gradle.kts" \) -exec sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.22"/g' {} +
+          sed -i -E 's/(org\.jetbrains\.kotlin\.android["'\''][[:space:]]+version[[:space:]]+["'\''])[0-9.]+/\11.9.22/g' android/settings.gradle
+          
 
           
 
